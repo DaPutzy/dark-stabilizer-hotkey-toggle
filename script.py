@@ -3,35 +3,39 @@ import pynput
 import pythoncom
 import wmi
 
-'''
-CONSTANTS
-'''
-DARK_STABILIZER_LEVEL_CODE = monitorcontrol.vcp.VCPCode(
+########################
+#      CONSTANTS       #
+########################
+
+VCP_CODE = monitorcontrol.vcp.VCPCode(
     name="dark stabilizer level",
     value=0xF4,
     code_type="rw",
     function="nc",
 )
 
-CONST_OFF     = 48
-CONST_LEVEL_1 = 49
-CONST_LEVEL_2 = 50
-CONST_LEVEL_3 = 51
+# 48 = OFF
+# 49 = LVL 1
+# 50 = LVL 2
+# 51 = LVL 3
+VCP_CODE_VALUES = [48, 49, 50, 51]
 
-KEY_TOGGLE = pynput.keyboard.Key.page_up
-KEY_RESET  = pynput.keyboard.Key.page_down
+KEY_INCREASE = pynput.keyboard.Key.page_up
+KEY_DECREASE = pynput.keyboard.Key.page_down
 
-MANUFACTURER = "DEL"
-MODEL = "AW3225QF"
+MANUFACTURER = "DEL" # somehow its DEL not DELL?
+MODEL        = "AW3225QF"
 
-'''
-GLOBAL VALUES
-'''
-current_value = CONST_OFF
+########################
+#    GLOBAL VALUES     #
+########################
 
-'''
-FUNCTIONS
-'''
+current_value_index = 0
+
+########################
+#      FUNCTIONS       #
+########################
+
 def to_string(value):
     return "".join(chr(c) for c in value if c > 0)
 
@@ -49,11 +53,11 @@ def find_monitor_index():
 
 # noinspection PyProtectedMember
 def on_press(key):
-    global current_value
+    global current_value_index
 
     pythoncom.CoInitialize()
 
-    if not key == KEY_TOGGLE and not key == KEY_RESET:
+    if not key == KEY_INCREASE and not key == KEY_DECREASE:
         return
 
     monitor_index = find_monitor_index()
@@ -64,29 +68,18 @@ def on_press(key):
 
     monitor = monitorcontrol.get_monitors()[monitor_index]
     with monitor:
-        # dark_stabilizer_level = monitor._get_vcp_feature(DARK_STABILIZER_LEVEL_CODE)
+        if key == KEY_INCREASE:
+            current_value_index = 0 if current_value_index == 3 else current_value_index + 1
 
-        if key == KEY_TOGGLE:
-            if current_value == CONST_OFF:
-                monitor._set_vcp_feature(DARK_STABILIZER_LEVEL_CODE, CONST_LEVEL_1)
-                current_value = CONST_LEVEL_1
-            elif current_value == CONST_LEVEL_1:
-                monitor._set_vcp_feature(DARK_STABILIZER_LEVEL_CODE, CONST_LEVEL_2)
-                current_value = CONST_LEVEL_2
-            elif current_value == CONST_LEVEL_2:
-                monitor._set_vcp_feature(DARK_STABILIZER_LEVEL_CODE, CONST_LEVEL_3)
-                current_value = CONST_LEVEL_3
-            else:
-                monitor._set_vcp_feature(DARK_STABILIZER_LEVEL_CODE, CONST_OFF)
-                current_value = CONST_OFF
+        if key == KEY_DECREASE:
+            current_value_index = 3 if current_value_index == 0 else current_value_index - 1
 
-        if key == KEY_RESET:
-            monitor._set_vcp_feature(DARK_STABILIZER_LEVEL_CODE, CONST_OFF)
-            current_value = CONST_OFF
+        monitor._set_vcp_feature(VCP_CODE, VCP_CODE_VALUES[current_value_index])
 
-'''
-MAIN
-'''
+########################
+#         MAIN         #
+########################
+
 class Main:
     def __init__(self):
         with pynput.keyboard.Listener(on_press=on_press) as listener:
