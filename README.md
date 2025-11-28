@@ -12,7 +12,7 @@ You may need to change the manufacturer, model or keyboard keys depending on you
 python.exe -m venv venv
 .\venv\Scripts\activate
 pip install -r .\requirements.txt
-pyinstaller.exe -F .\script.py
+pyinstaller --noconsole --onefile .\script.py
 ```
 
 ### Helpful Resources
