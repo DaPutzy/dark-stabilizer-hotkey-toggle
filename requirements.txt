@@ -1,0 +1,4 @@
+monitorcontrol==4.1.1
+pyinstaller==6.17.0
+pynput==1.8.1
+wmi==1.5.1
